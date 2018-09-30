@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>jq-无缝轮播</title>
+    <script src="js/jquery-3.3.1.js"></script>
+    <link rel="stylesheet" href="css/1.css">
+</head>
+
+<body>
+    <div class="container">
+
+        <div class="items"></div>
+        <div class="items"></div>
+        <div class="items"></div>
+        <div class="items"></div>
+
+        <div class="nav">
+            <div class="items1"></div>
+            <div class="items1"></div>
+            <div class="items1"></div>
+            <div class="items1"></div>
+        </div>
+
+        <div class="left">&lt</div>
+        <div class="right">&gt</div>
+
+    </div>
+
+    <script>
+        /* 
+            无缝轮播思路：
+            1、将第一张复制一份到最后一张
+                新增一个items节点，配合CSS，它的样式就是第一张的样式
+            2、跳到最后一张时，瞬间切换到队列的第一张，此时取消轮播效果
+         */
+
+        //数组控制的下标，决定哪一个为止是0
+        var index = 0;
+        var itemsLength = $(".items").length;
+
+        $('.items').eq(itemsLength - 1).after($("<div class='items' style='left:2000px'></div>"));
+
+        //更新长度
+        itemsLength = $(".items").length;
+
+        //var arr = [0, 1, 2, 3, 4];
+        /* width:500px
+            index 0 0 500 1000 1500 2000
+            index 1 -500 0 500 1000 1500 2000
+            ...
+
+            500
+            0 1 2 3 4
+            -1 0 1 2 3
+         */
+        var arr = [];
+        for (var i = 0; i < itemsLength; i++) {
+            arr[i] = i;
+        }
+
+        //焦点轮播
+        $(".items1").eq(0).css({
+            "background-color": "royalblue"
+        });
+        $(".items1").hover(function () {
+            //取得当前items1位置的下标
+            index = $(this).index();
+            arrChange(index);
+            focusChange();
+            imgChange();
+        });
+
+
+        //方向控制轮播
+        //-1 (0 1 2 3..) itemsLength(边界数字和数组长度相等)
+        $(".right").on("click", function () {
+            // 点击 - index+=1 - 处理
+            index = index + 1;
+
+            console.log(index);
+            arrChange(index);
+            console.log(arr)
+
+            focusChange();
+            
+            //必须等动画完结之后采取修改原始的引用参数
+            //因为动画尚未完成时修改原始引用参数，会导致另一个根据参数变化而生成的动画序列
+            imgChange(function () {
+                if (index === 4) {
+
+                    //瞬间置位
+                    index = 0;
+                    arrChange(index);
+                    console.log(arr);
+
+                    for (var i = 0; i < itemsLength; i++) {
+                        (function () {
+                            var temp = i;
+                            $(".items").eq(temp).stop().css({
+                                "left": parseInt(500 * arr[temp]) + 'px'
+                            });
+                        })();
+                    }
+                }
+            });
+        });
+
+        $(".left").on("click", function () {
+            index -= 1;
+            if (index < 0) {
+                focusChange(index);
+                index = itemsLength - 1;
+                arrChange(index);
+                imgChange();
+                for (var i = 0; i < itemsLength; i++) {
+                    $(".items")[i].style.transition = 'none';
+                }
+            }
+            else {
+                action();
+            }
+        });
+
+        /* 
+            函数封装：
+            1、arr转变
+            2、焦点变化
+            3、轮播图变化
+        */
+
+        function arrChange(index) {
+            //index 
+            /* 如果arr[index]大于0，数组循环-1，"直到"arr[index]===0;
+                如果arr[index]小于0，数组循环+1，“直到”rr[index]===0；
+                 */
+            if (arr[index] > 0) {
+                while (arr[index] > 0) {
+                    //减去一
+                    for (var i = 0; i < itemsLength; i++) {
+                        arr[i] -= 1;
+                    }
+                }
+            }
+            else if (arr[index] < 0) {
+                while (arr[index] < 0) {
+                    for (var i = 0; i < itemsLength; i++) {
+                        arr[i] += 1;
+                    }
+                }
+            } else if (arr[index] === 0) ({})
+
+            return arr;
+        }
+
+        function focusChange(parameter) {
+            //到了最后一张，焦点要回归原始状态
+            if (index == 4) {
+                $(".items1").eq(0).css({
+                    "background-color": "royalblue"
+                }).siblings().css({
+                    "background-color": "rgba(0,0,0,0.5)"
+                })
+            }
+            else {
+                $(".items1").eq(index).css({
+                    "background-color": "royalblue"
+                }).siblings().css({
+                    "background-color": "rgba(0,0,0,0.5)"
+                })
+            }
+        }
+
+        function imgChange(callback) {
+            console.log("imgRun");
+
+            /* 选中所有items，根据变化数组得出具体left偏移 */
+
+            for (var i = 0; i < itemsLength; i++) {
+                (function () {
+                    var temp = i;
+                    $(".items").eq(temp).stop().animate({
+                        "left": parseInt(500 * arr[temp]) + 'px'
+                    }, 700, callback);
+                })();
+            }
+        }
+
+        //action = 焦点变化
+        // function action() {
+        //     focusChange();
+        //     arrChange(index);
+        //     imgChange();
+        // }
+
+    </script>
+
+</body>
+
+</html>

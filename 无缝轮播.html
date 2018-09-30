@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>jq-无缝轮播</title>
+    <script src="js/jquery-3.3.1.js"></script>
+    <link rel="stylesheet" href="css/1.css">
+</head>
+
+<body>
+    <div class="container">
+
+        <div class="items"></div>
+        <div class="items"></div>
+        <div class="items"></div>
+        <div class="items"></div>
+
+        <div class="nav">
+            <div class="items1"></div>
+            <div class="items1"></div>
+            <div class="items1"></div>
+            <div class="items1"></div>
+        </div>
+
+        <div class="left">&lt</div>
+        <div class="right">&gt</div>
+
+    </div>
+
+    <script>
+        /* 
+            无缝轮播思路：
+            1、将第一张复制一份到最后一张
+                新增一个items节点，配合CSS，它的样式就是第一张的样式
+            2、跳到最后一张时，瞬间切换到队列的第一张，此时取消轮播效果
+         */
+
+        /* 新增节点 */
+        //$("<div class='items' style='left:2000px'></div>").insertAfter(".items").eq(itemsLength-1);
+
+
+        /* 
+            1.焦点1 - 第一张 - 0 500 1000 1500
+            2.焦点2 - 第二张 - -500 0 500 1000
+            3.焦点3 - 第三张 - -1000 -500 0 500
+            4.焦点4 - 第四张 - -1500 -1000 -500 0
+        
+            index: 0  0 1 2 3 -> 0 1 2 3
+            index: 1          -> -1 0 1 2
+            index: 2          -> -2 -1 0 1
+            index: 3          -> -3 -2 -1 0
+        */
+
+        var index = 0;
+        var itemsLength = $(".items").length;
+
+        $('.items').eq(itemsLength - 1).after($("<div class='items' style='left:2000px'></div>"));
+        // $("<div class='items1'></div>").appendTo(".nav");
+        //更新长度
+        itemsLength = $(".items").length;
+
+        //var arr = [0, 1, 2, 3];
+        var arr = [];
+        for (var i = 0; i < itemsLength; i++) {
+            arr[i] = i;
+        }
+
+        //焦点轮播
+        $(".items1").eq(0).css({
+            "background-color": "royalblue"
+        });
+        $(".items1").hover(function () {
+            index = $(this).index();
+            action();
+        });
+
+        //方向控制轮播
+        //-1 (0 1 2 3..) itemsLength(边界数字和数组长度相等)
+        $(".right").on("click", function () {
+            index += 1;
+            arrChange(index);
+
+            console.log(index);
+            console.log(arr)
+
+            /* -1 (0 1 2 3)(4) itemsLenght，当到了4这个状态，自动跳到第一张 */
+            action();
+
+            if (arr[5] === 0) {
+                arrChange[0];
+                for (var i = 0; i < itemsLength; i++) {
+                    (function () {
+                        var temp = i;
+
+                        $(".items")[temp].style.transition = 'none';
+                        $(".items").eq(temp).css({
+                            "left": parseInt(500 * arr[temp]) + 'px'
+                        });
+                    })();
+                }
+            }
+
+        });
+
+        $(".left").on("click", function () {
+            index -= 1;
+            if (index < 0) {
+                focusChange(index);
+                index = itemsLength - 1;
+                arrChange(index);
+                imgChange();
+                for (var i = 0; i < itemsLength; i++) {
+                    $(".items")[i].style.transition = 'none';
+                }
+            }
+            else {
+                action();
+            }
+        });
+
+        /* 
+            函数封装：
+            1、arr转变
+            2、焦点变化
+            3、轮播图变化
+        */
+
+        function arrChange(index) {
+            /* 如果arr[index]大于0，数组循环-1，"直到"arr[index]===0;
+                如果arr[index]小于0，数组循环+1，“直到”rr[index]===0；
+                 */
+            if (arr[index] > 0) {
+                while (arr[index] > 0) {
+                    //所以减去一
+                    for (var i = 0; i < itemsLength; i++) {
+                        arr[i] -= 1;
+                    }
+                }
+            }
+            else if (arr[index] < 0) {
+                while (arr[index] < 0) {
+                    for (var i = 0; i < itemsLength; i++) {
+                        arr[i] += 1;
+                    }
+                }
+            } else if (arr[index] === 0) ({})
+
+            return arr;
+        }
+
+        function focusChange(parameter) {
+            /* -1 (0 1 2 3) (4) itemslength */
+            if (parameter >= itemsLength - 1) {
+                $(".items1").eq(0).css({
+                    "background-color": "royalblue"
+                }).siblings().css({
+                    "background-color": "rgba(0,0,0,0.5)"
+                })
+            }
+            else if (parameter < 0) {
+                $(".items1").eq(0).css({
+                    "background-color": "royalblue"
+                }).siblings().css({
+                    "background-color": "rgba(0,0,0,0.5)"
+                })
+            }
+
+            else {
+                $(".items1").eq(index).css({
+                    "background-color": "royalblue"
+                }).siblings().css({
+                    "background-color": "rgba(0,0,0,0.5)"
+                })
+            }
+        }
+
+
+
+        function imgChange() {
+            /* 选中所有items，根据变化数组得出具体left偏移 */
+            for (var i = 0; i < itemsLength; i++) {
+                (function () {
+                    var temp = i;
+
+                    $(".items")[temp].style.transition = 'left 1s linear';
+                    $(".items").eq(temp).css({
+                        "left": parseInt(500 * arr[temp]) + 'px'
+                    });
+                })();
+            }
+        }
+
+        function action() {
+            focusChange();
+            arrChange(index);
+            imgChange();
+        }
+
+    </script>
+
+</body>
+
+</html>
